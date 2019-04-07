@@ -129,6 +129,7 @@ interface StateChartProps {
   machine: StateNode<any> | string;
   height?: number | string;
   hideEditor?: boolean;
+  onTransition?: (state:State<any, any>) => void;
 }
 
 interface StateChartState {
@@ -213,21 +214,28 @@ export class StateChart extends React.Component<
           ? this.props.machine
           : `Machine(${JSON.stringify(machine.config, null, 2)})`,
       toggledStates: {},
-      service: interpret(machine, {}).onTransition(current => {
-        this.setState({ current }, () => {
-          if (this.state.previewEvent) {
-            this.setState({
-              preview: this.state.service.nextState(this.state.previewEvent)
-            });
-          }
-        });
-      })
+      service: this.initService(machine),
     };
   })();
   svgRef = React.createRef<SVGSVGElement>();
   componentDidMount() {
     this.state.service.start();
   }
+
+  initService(machine: StateNode<any>) {
+    return interpret(machine).onTransition(current => {
+      this.setState({ current }, () => {
+        if(this.state.previewEvent) {
+          this.setState({
+            preview: this.state.service.nextState(this.state.previewEvent)
+          })
+        }
+      })
+
+      this.props.onTransition && this.props.onTransition(current);
+    })
+  }
+
   renderView() {
     const { view, current, machine, code } = this.state;
 
@@ -320,19 +328,7 @@ export class StateChart extends React.Component<
       () => {
         this.setState(
           {
-            service: interpret(this.state.machine)
-              .onTransition(current => {
-                this.setState({ current }, () => {
-                  if (this.state.previewEvent) {
-                    this.setState({
-                      preview: this.state.service.nextState(
-                        this.state.previewEvent
-                      )
-                    });
-                  }
-                });
-              })
-              .start()
+            service: this.initService(this.state.machine).start(),
           },
           () => {
             console.log(this.state.service);
