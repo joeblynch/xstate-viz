@@ -71,9 +71,13 @@ const StyledView = styled.div`
   overflow: hidden;
 `;
 
-const StyledStateChart = styled.div`
+interface StyledStateChartProps {
+  hideEditor?: boolean,
+}
+
+const StyledStateChart = styled.div<StyledStateChartProps>`
   display: grid;
-  grid-template-columns: 1fr 25rem;
+  grid-template-columns: ${({hideEditor=false}) => hideEditor ? '100%' : '1fr 25rem'};
   grid-template-rows: auto;
   font-family: sans-serif;
   font-size: 12px;
@@ -121,9 +125,10 @@ function Field({ label, children, disabled, style }: FieldProps) {
 }
 
 interface StateChartProps {
-  className: string;
+  className?: string;
   machine: StateNode<any> | string;
   height?: number | string;
+  hideEditor?: boolean;
 }
 
 interface StateChartState {
@@ -361,6 +366,7 @@ export class StateChart extends React.Component<
     return (
       <StyledStateChart
         className={this.props.className}
+        hideEditor={this.props.hideEditor}
         key={code}
         style={{
           height: this.props.height || '100%',
@@ -481,22 +487,24 @@ export class StateChart extends React.Component<
             })}
           </svg>
         </StyledVisualization>
-        <StyledSidebar>
-          <StyledViewTabs>
-            {['definition', 'state'].map(view => {
-              return (
-                <StyledViewTab
-                  onClick={() => this.setState({ view })}
-                  key={view}
-                  data-active={this.state.view === view || undefined}
-                >
-                  {view}
-                </StyledViewTab>
-              );
-            })}
-          </StyledViewTabs>
-          <StyledView>{this.renderView()}</StyledView>
-        </StyledSidebar>
+        {this.props.hideEditor ? null : (
+          <StyledSidebar>
+            <StyledViewTabs>
+              {['definition', 'state'].map(view => {
+                return (
+                  <StyledViewTab
+                    onClick={() => this.setState({ view })}
+                    key={view}
+                    data-active={this.state.view === view || undefined}
+                  >
+                    {view}
+                  </StyledViewTab>
+                );
+              })}
+            </StyledViewTabs>
+            <StyledView>{this.renderView()}</StyledView>
+          </StyledSidebar>
+        )}
       </StyledStateChart>
     );
   }
